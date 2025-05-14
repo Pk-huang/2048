@@ -30,13 +30,9 @@ export class Game {
 
   // ✅ 獲取空格子
   getEmptyCells(): [number, number][] {
-    const cells: [number, number][] = [];
-    for (let r = 0; r < this.size; r++) {
-      for (let c = 0; c < this.size; c++) {
-        if (this.board[r][c] === 0) cells.push([r, c]);
-      }
-    }
-    return cells;
+    return this.board.flatMap((row, r) =>
+      row.map((value, c) => (value == 0 ? [r, c] : null))
+    ).filter(cell => cell !== null) as [number, number][]
   }
 
 
@@ -48,16 +44,7 @@ export class Game {
     if (direction === "left") {
       this.board = this.board.map(row => this.mergeRow(row));
     } else if (direction === "right") {
-
-      let test =[[0, 2, 2, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0]]
-
-      // this.board = this.board.map(row => this.mergeRow(row.reverse()).reverse());
-
-      test = test.map(row => this.mergeRow(row));
-      console.log('test', test)
+      this.board = this.board.map(row => this.mergeRow(row).reverse());
     } else if (direction === "up") {
       this.transpose();
       this.board = this.board.map(row => this.mergeRow(row));
@@ -71,49 +58,51 @@ export class Game {
 
     // ✅ 只有當棋盤有變化才產生新方塊
     if (JSON.stringify(this.board) !== original) {
+      console.log(1235)
       this.spawnTile();
       this.render();
 
     }
   }
-
-  
-  // ✅ 合併
-  private mergeRow(row:number[]): number[] {
-
-    const filtered = row.filter(num => num !== 0)
-
-  
-    for ( let i = 0; i < filtered.length - 1; i++) {
-      if ( filtered[i] == filtered[i + 1]) {
-        filtered[i] *= 2;
-        filtered[i + 1] = 0;
-      }
-    }
-
-    let returnfilitered = filtered.filter(num => num !== 0)
-    
-    returnfilitered = returnfilitered.concat(Array(this.size - returnfilitered.length).fill(0))
-    console.log('returnfilitered', returnfilitered)
-
-    return filtered.filter(num => num !== 0).concat(Array(this.size - filtered.length).fill(0));
-  }
-
-  private transpose(){
-    this.board = this.board[0].map((_, colIndex)=>(
+  private transpose() {
+    this.board = this.board[0].map((_, colIndex) => (
       this.board.map(row => row[colIndex])
     ))
   }
 
-  // ✅ 監聽鍵盤事件（上下左右）
-  private addEventListeners() {
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft") this.slideAndMerge("left");
-      if (e.key === "ArrowRight") this.slideAndMerge("right");
-      if (e.key === "ArrowUp") this.slideAndMerge("up");
-      if (e.key === "ArrowDown") this.slideAndMerge("down");
-    });
+  // ✅ 合併
+  // ✅ 合併邏輯（簡化 + 高效）
+  private mergeRow(row: number[]): number[] {
+    const filtered = row.filter(num => num !== 0);
+    for (let i = 0; i < filtered.length - 1; i++) {
+      if (filtered[i] === filtered[i + 1]) {
+        filtered[i] *= 2;
+        filtered.splice(i + 1, 1); // ✅ 合併後直接移除
+      }
+    }
+
+    // ✅ 填充 0，確保長度固定
+    return [...filtered, ...Array(this.size - filtered.length).fill(0)];
   }
+
+
+
+
+// ✅ 監聽鍵盤事件（上下左右）
+private addEventListeners() {
+  window.addEventListener("keydown", (e) => {
+    const directions = {
+      ArrowLeft: "left",
+      ArrowRight: "right",
+      ArrowUp: "up",
+      ArrowDown: "down"
+    };
+    if (directions[e.key]) {
+      this.slideAndMerge(directions[e.key]);
+    }
+  });
+}
+
 
   render() {
     console.log(this.board)
