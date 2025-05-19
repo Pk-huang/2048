@@ -11,4 +11,4 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
 // 初始化遊戲
 const game = new Game(4);
-game.initilize();
+game.initialize();
